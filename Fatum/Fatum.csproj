@@ -18,6 +18,11 @@
     <Version>0.1.0</Version>
   </PropertyGroup>
 
+  <!-- Plugin icon shown in the Dalamud installer (images/icon.png next to the DLL). -->
+  <ItemGroup>
+    <Content Include="images\**" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
   <ItemGroup>
     <!-- Speech-to-text (offline, local) -->
     <PackageReference Include="Whisper.net" Version="1.8.1" />
