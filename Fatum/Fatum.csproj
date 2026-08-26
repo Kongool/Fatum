@@ -1,0 +1,46 @@
+<Project Sdk="Dalamud.NET.Sdk/15.0.0">
+
+  <!--
+    SDK version tracks your installed Dalamud (15.x). This stamps the correct
+    DalamudApiLevel into the manifest so Dalamud loads it without "outdated".
+    If you update Dalamud and it complains again, bump this to match.
+  -->
+
+  <PropertyGroup>
+    <!-- Match your installed Dalamud (v15 is built against .NET 10). -->
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Platforms>x64</Platforms>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <AssemblyName>Fatum</AssemblyName>
+    <RootNamespace>Fatum</RootNamespace>
+    <Version>0.1.0</Version>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Speech-to-text (offline, local) -->
+    <PackageReference Include="Whisper.net" Version="1.8.1" />
+    <PackageReference Include="Whisper.net.Runtime" Version="1.8.1" />
+
+    <!-- Microphone capture -->
+    <PackageReference Include="NAudio" Version="2.2.1" />
+  </ItemGroup>
+
+  <!--
+    Whisper.net.Runtime ships native libraries (whisper.dll / ggml-*.dll) under
+    runtimes/win-x64/native. Copy them next to the built plugin so DalamudPackager
+    bundles them and Whisper.net can load them at runtime.
+  -->
+  <Target Name="CopyWhisperNatives" AfterTargets="Build">
+    <ItemGroup>
+      <WhisperNative Include="$(NuGetPackageRoot)whisper.net.runtime\1.8.1\build\win-x64\**\*.dll" />
+      <WhisperNative Include="$(OutDir)runtimes\win-x64\native\*.dll" />
+    </ItemGroup>
+    <Copy SourceFiles="@(WhisperNative)"
+          DestinationFolder="$(OutDir)"
+          SkipUnchangedFiles="true"
+          Condition="'@(WhisperNative)' != ''" />
+  </Target>
+
+</Project>

@@ -1,0 +1,15 @@
+{
+  "Name": "Fatum Voice Chat",
+  "InternalName": "Fatum",
+  "Author": "you",
+  "Punchline": "Speak into your mic, review, and drop it into FFXIV chat.",
+  "Description": "Push-to-talk or toggle voice recording that is transcribed locally with Whisper and inserted into a review box. You confirm and it is sent to your chosen channel. Fully offline, no cloud, no API keys.",
+  "RepoUrl": "",
+  "ApplicableVersion": "any",
+  "Tags": [ "voice", "speech", "chat", "accessibility", "whisper" ],
+  "CategoryTags": [ "utility", "accessibility" ],
+  "LoadRequiredState": 0,
+  "LoadSync": false,
+  "CanUnloadAsync": true,
+  "IconUrl": ""
+}
