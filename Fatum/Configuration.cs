@@ -107,6 +107,23 @@ public class Configuration : IPluginConfiguration
     /// <summary>When locked the overlay is click-through and fixed; unlock to drag it.</summary>
     public bool OverlayLocked { get; set; } = true;
 
+    // --- Screen-edge dock (shared layout with Daedalus / Charon) ---
+    /// <summary>Show Fatum's tab on the screen edge.</summary>
+    public bool EdgeDockEnabled { get; set; } = true;
+
+    /// <summary>Which screen edge the tab is pinned to. Dragging the tab changes it.</summary>
+    public Fatum.Windows.Dock.DockEdge EdgeDockEdge { get; set; } = Fatum.Windows.Dock.DockEdge.Right;
+
+    /// <summary>Where along its edge the tab sits: its centre as a fraction of the edge (0.5 = the middle).</summary>
+    public float EdgeDockAlong { get; set; } = 0.5f;
+
+    /// <summary>Back to the right edge, in the middle.</summary>
+    public void ResetEdgeDockPlacement()
+    {
+        EdgeDockEdge = Fatum.Windows.Dock.DockEdge.Right;
+        EdgeDockAlong = 0.5f;
+    }
+
     /// <summary>Saved overlay position; negative means "use the default top-center spot".</summary>
     public float OverlayPosX { get; set; } = -1f;
     public float OverlayPosY { get; set; } = -1f;

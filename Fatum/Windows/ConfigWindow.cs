@@ -27,15 +27,12 @@ public sealed class ConfigWindow : Window, IDisposable
         SizeCondition = ImGuiCond.FirstUseEver;
     }
 
-    public override void OnOpen()
-    {
-        devices = MicrophoneCapture.ListDevices().ToArray();
-        validKeys = Plugin.KeyState.GetValidVirtualKeys().ToArray();
-        monitor.Start(config.InputDeviceNumber);
-    }
+    public override void OnOpen() => InitResources();
 
     public override void OnClose()
     {
+        // The edge-dock panel may still be showing this body; leave the mic meter running for it.
+        if (embedded) return;
         monitor.Stop();
         listeningForKeyIndex = -1;
     }
@@ -47,6 +44,67 @@ public sealed class ConfigWindow : Window, IDisposable
         DrawMicrophone();
         DrawWhisper();
         DrawOutput();
+        DrawDock();
+    }
+
+    // --- Drawn inside the edge-dock panel ------------------------------------
+
+    private bool embedded;
+
+    /// <summary>Draws the settings body inside another window (the edge-dock panel).</summary>
+    public void DrawEmbedded()
+    {
+        if (!embedded)
+        {
+            embedded = true;
+            if (!IsOpen) InitResources();
+        }
+        Draw();
+    }
+
+    /// <summary>The dock panel closed: stop the mic meter unless the settings window still needs it.</summary>
+    public void ReleaseEmbedded()
+    {
+        if (!embedded) return;
+        embedded = false;
+        if (IsOpen) return;
+        monitor.Stop();
+        listeningForKeyIndex = -1;
+    }
+
+    private void InitResources()
+    {
+        devices = MicrophoneCapture.ListDevices().ToArray();
+        validKeys = Plugin.KeyState.GetValidVirtualKeys().ToArray();
+        if (monitor.DeviceNumber != config.InputDeviceNumber)
+            monitor.Start(config.InputDeviceNumber);
+    }
+
+    private static readonly string[] DockEdges = { "Left", "Right", "Top", "Bottom" };
+
+    private void DrawDock()
+    {
+        Section("Screen-edge tab");
+        var enabled = config.EdgeDockEnabled;
+        if (ImGui.Checkbox("Show Fatum tab on the screen edge", ref enabled))
+            Apply(() => config.EdgeDockEnabled = enabled);
+
+        if (!config.EdgeDockEnabled) return;
+
+        ImGui.Indent();
+        // Combo index = DockEdge value (Left 0, Right 1, Top 2, Bottom 3).
+        var edge = (int)config.EdgeDockEdge;
+        ImGui.SetNextItemWidth(120);
+        if (ImGui.Combo("Dock edge", ref edge, DockEdges, DockEdges.Length))
+            Apply(() => config.EdgeDockEdge = (Dock.DockEdge)edge);
+
+        ImGui.SameLine();
+        if (ImGui.Button("Reset placement##dock"))
+            Apply(config.ResetEdgeDockPlacement);
+
+        ImGui.TextDisabled("Drag the tab anywhere: it lands on the nearest edge, where you let go.");
+        ImGui.TextDisabled("Hover to open, click to pin. Shares space with Daedalus / Charon tabs.");
+        ImGui.Unindent();
     }
 
     private void DrawTrigger()

@@ -83,6 +83,12 @@ Open settings via the **⚙ gear icon** next to the plugin in `/xlplugins`, or t
 - **Model file** — paste the path to the `.bin` you downloaded.
 - **Language** — `en`, `ja`, `auto`, etc.
 - **Auto-send** — off = review box (recommended); on = send immediately.
+- **Screen-edge tab** — a **Fatum** tab docked to a screen edge (right edge, middle, by
+  default). Hover it to pop out the settings panel; click to pin it open. **Drag it
+  anywhere**: let go and it lands on the nearest edge (left/right/top/bottom) where you
+  dropped it. It shares the edge-dock layout with Daedalus and Charon, so tabs wanting the
+  same spot sit side by side instead of overlapping. A red dot shows while you're being
+  heard. Turn it off, pick an edge, or *Reset placement* under *Screen-edge tab*.
 - **On-screen indicator** — a small click-through overlay shows a pulsing red **REC** dot
   (with the target channel) while you talk and a spinner while it transcribes, so you get
   feedback without watching the chat log. To move it: untick **Lock overlay position** in

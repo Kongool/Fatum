@@ -30,6 +30,7 @@ public sealed class Plugin : IDalamudPlugin
     private readonly ConfigWindow configWindow;
     private readonly ReviewWindow reviewWindow;
     private readonly RecordingOverlay overlay;
+    private readonly EdgeDockWindow edgeDock;
     private readonly VoiceController controller;
 
     public Plugin()
@@ -49,10 +50,12 @@ public sealed class Plugin : IDalamudPlugin
 
         controller = new VoiceController(Configuration, reviewWindow);
         overlay = new RecordingOverlay(Configuration, controller);
+        edgeDock = new EdgeDockWindow(Configuration, configWindow, controller);
 
         windowSystem.AddWindow(configWindow);
         windowSystem.AddWindow(reviewWindow);
         windowSystem.AddWindow(overlay);
+        windowSystem.AddWindow(edgeDock);
 
         CommandManager.AddHandler(CommandName, new CommandInfo(OnCommand)
         {
@@ -102,6 +105,7 @@ public sealed class Plugin : IDalamudPlugin
 
         controller.Dispose();
         windowSystem.RemoveAllWindows();
+        edgeDock.Dispose();
         configWindow.Dispose();
 
         CommandManager.RemoveHandler(CommandName);
