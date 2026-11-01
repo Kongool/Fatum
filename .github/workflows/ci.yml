@@ -1,0 +1,93 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+
+  # Cheap checks that need neither the SDK nor Dalamud, so a mistake fails fast.
+  guards:
+    name: Guards (repo.json)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Check repo.json against the plugin version
+        run: |
+          build_ver=$(grep -oP '<Version>\K[\d.]+(?=</Version>)' Directory.Build.props)
+          assembly_ver=$(jq -r '.[0].AssemblyVersion' repo.json)
+          testing_ver=$(jq -r '.[0].TestingAssemblyVersion' repo.json)
+          echo "Directory.Build.props <Version>   = $build_ver"
+          echo "repo.json AssemblyVersion         = $assembly_ver"
+          echo "repo.json TestingAssemblyVersion  = $testing_ver"
+          if [ "$assembly_ver" != "$testing_ver" ]; then
+            echo "::error::repo.json AssemblyVersion ($assembly_ver) and TestingAssemblyVersion ($testing_ver) must match."
+            exit 1
+          fi
+          # repo.json may lag <Version> (release.yml catches it up once the zip is
+          # published) but must never lead it: Dalamud would offer an update that isn't there.
+          newest=$(printf '%s\n%s\n' "$build_ver" "$assembly_ver" | sort -V | tail -1)
+          if [ "$newest" != "$build_ver" ]; then
+            echo "::error::repo.json ($assembly_ver) is ahead of Directory.Build.props ($build_ver)."
+            exit 1
+          fi
+
+  # Full build, with Dalamud at the standard path so Dalamud.NET.Sdk can find it.
+  build:
+    name: Build (Windows)
+    needs: guards
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Download Dalamud
+        shell: pwsh
+        run: |
+          $dalamudDir = "$env:AppData\XIVLauncher\addon\Hooks\dev"
+          New-Item -ItemType Directory -Force -Path $dalamudDir | Out-Null
+          Invoke-WebRequest -Uri "https://goatcorp.github.io/dalamud-distrib/latest.zip" -OutFile dalamud.zip
+          Expand-Archive -Path dalamud.zip -DestinationPath $dalamudDir -Force
+          Remove-Item dalamud.zip
+
+      - name: Build (Release)
+        run: dotnet build Fatum/Fatum.csproj --configuration Release
+
+      - name: Check the plugin zip
+        shell: pwsh
+        run: |
+          Expand-Archive -Path Fatum/bin/Release/Fatum/latest.zip -DestinationPath zipcheck
+          foreach ($file in 'Fatum.dll', 'Fatum.json', 'Whisper.net.dll', 'NAudio.dll', 'runtimes/win-x64/whisper.dll', 'runtimes/win-x64/ggml-whisper.dll') {
+            if (-not (Test-Path "zipcheck/$file")) { throw "latest.zip is missing $file" }
+          }
+
+      - name: Dry-run the repo.json update
+        shell: pwsh
+        run: |
+          Copy-Item repo.json repo.dryrun.json
+          ./.github/scripts/update-repo-json.ps1 -Version '9.9.9.9' -ManifestPath Fatum/bin/Release/Fatum.json -DownloadCount 7 -Path repo.dryrun.json
+          $raw = Get-Content -Raw repo.dryrun.json
+          if (-not $raw.TrimStart().StartsWith('[')) { throw 'repo.json lost its array wrapper' }
+          $entries = @($raw | ConvertFrom-Json)
+          if ($entries.Count -ne 1) { throw "Expected 1 entry, got $($entries.Count)" }
+          if ($entries[0].AssemblyVersion -ne '9.9.9.9' -or $entries[0].DownloadCount -ne 7) { throw 'repo.json fields were not updated' }
+          if ($entries[0].InternalName -ne 'Fatum') { throw 'repo.json lost its other fields' }
+
+      - name: Upload plugin artifact
+        if: github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v7
+        with:
+          name: Fatum-plugin
+          path: Fatum/bin/Release/Fatum/latest.zip
+          if-no-files-found: error

@@ -15,7 +15,6 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <AssemblyName>Fatum</AssemblyName>
     <RootNamespace>Fatum</RootNamespace>
-    <Version>0.1.0</Version>
   </PropertyGroup>
 
   <!-- Plugin icon shown in the Dalamud installer (images/icon.png next to the DLL). -->

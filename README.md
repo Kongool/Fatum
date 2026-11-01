@@ -150,6 +150,16 @@ Open settings via the **⚙ gear icon** next to the plugin in `/xlplugins`, or t
 - **Nothing happens on the hotkey** — Dalamud only sees keys while the **game window is
   focused**. Also make sure the hotkey doesn't collide with a game keybind you're holding.
 
+## Releasing
+
+Bump `<Version>` in `Directory.Build.props` (four parts, e.g. `0.1.1.0`) and push to
+`main`. GitHub Actions then tags it, builds it, publishes `latest.zip` as a release, and
+updates `repo.json`, so Dalamud offers the update. Don't edit the version in `repo.json`
+by hand: it should only change once the new zip exists. Commits without a version bump
+just run CI. A push whose commits say `[skip auto-tag]` holds the release back until the next push.
+
+If a release doesn't start, run **Release Fatum** from the Actions tab with the tag as input.
+
 ## Notes
 
 Built and loading against **Dalamud 15** (`Dalamud.NET.Sdk/15.0.0`, `DalamudApiLevel 15`,

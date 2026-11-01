@@ -1,0 +1,132 @@
+name: Release Fatum
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  # How auto-tag.yml starts a release, and a manual fallback. Dispatch on the tag ref,
+  # or pass the tag as the input.
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to release (e.g. v1.0.0.0). Defaults to the ref this is dispatched on.'
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - name: Resolve target tag
+        id: tag
+        shell: bash
+        env:
+          REF_NAME: ${{ github.ref_name }}
+          INPUT_TAG: ${{ inputs.tag }}
+        run: |
+          target="${INPUT_TAG:-$REF_NAME}"
+          if [[ ! "$target" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(\.[0-9]+)?$ ]]; then
+            echo "::error::Resolved target '$target' is not a v*.*.* tag - pass the tag input or dispatch on a tag ref."
+            exit 1
+          fi
+          echo "target=$target" >> "$GITHUB_OUTPUT"
+          echo "version=${target#v}" >> "$GITHUB_OUTPUT"
+          echo "Releasing $target"
+
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ steps.tag.outputs.target }}
+          fetch-depth: 0
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Download Dalamud
+        shell: pwsh
+        run: |
+          $dalamudDir = "$env:AppData\XIVLauncher\addon\Hooks\dev"
+          New-Item -ItemType Directory -Force -Path $dalamudDir | Out-Null
+          Invoke-WebRequest -Uri "https://goatcorp.github.io/dalamud-distrib/latest.zip" -OutFile dalamud.zip
+          Expand-Archive -Path dalamud.zip -DestinationPath $dalamudDir -Force
+          Remove-Item dalamud.zip
+
+      - name: Build (Release)
+        run: dotnet build Fatum/Fatum.csproj --configuration Release
+
+      - name: Stage latest.zip
+        shell: pwsh
+        env:
+          VERSION: ${{ steps.tag.outputs.version }}
+        run: |
+          $src = 'Fatum/bin/Release/Fatum/latest.zip'
+          if (-not (Test-Path $src)) { throw "SDK-built plugin zip not found at $src" }
+          # repo.json will advertise this version, so the zip has to really be it.
+          $built = (Get-Content -Raw Fatum/bin/Release/Fatum.json | ConvertFrom-Json).AssemblyVersion
+          if ($built -ne $env:VERSION) { throw "Tag says $env:VERSION but the plugin built as $built" }
+          Copy-Item $src 'latest.zip' -Force
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ steps.tag.outputs.target }}
+          name: ${{ steps.tag.outputs.target }}
+          files: latest.zip
+          generate_release_notes: true
+          fail_on_unmatched_files: true
+
+      - name: Fetch total download count
+        id: count
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          total=$(gh api "repos/${{ github.repository }}/releases" --paginate \
+            --jq '[.[].assets[].download_count] | add // 0' | awk '{s+=$1} END {print s+0}')
+          echo "total=$total" >> "$GITHUB_OUTPUT"
+          echo "Total downloads across all releases: $total"
+
+      - name: Update repo.json
+        shell: pwsh
+        env:
+          VERSION: ${{ steps.tag.outputs.version }}
+          TOTAL: ${{ steps.count.outputs.total }}
+        run: ./.github/scripts/update-repo-json.ps1 -Version $env:VERSION -ManifestPath Fatum/bin/Release/Fatum.json -DownloadCount ([int]$env:TOTAL)
+
+      - name: Commit repo.json
+        shell: pwsh
+        env:
+          TARGET: ${{ steps.tag.outputs.target }}
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add repo.json
+          if (-not (git status --porcelain -- repo.json)) {
+            Write-Host 'No changes to commit.'
+            exit 0
+          }
+          git commit -m "Release ${env:TARGET}: bump repo.json"
+          # -X theirs resolves any repo.json conflict in favour of the values just written
+          # (in a rebase, "theirs" is the commit being rebased). Without it a concurrent
+          # edit leaves conflict markers and the plugin repo reads a corrupted file.
+          for ($i = 1; $i -le 5; $i++) {
+            git fetch origin main
+            git rebase -X theirs origin/main
+            if ($LASTEXITCODE -ne 0) {
+              git rebase --abort 2>$null
+              Write-Host "Rebase failed (attempt $i); retrying..."
+              Start-Sleep -Seconds 2
+              continue
+            }
+            git push origin HEAD:main
+            if ($LASTEXITCODE -eq 0) { exit 0 }
+            Write-Host "Push rejected (attempt $i); retrying after rebase..."
+            Start-Sleep -Seconds 2
+          }
+          Write-Error 'Failed to push repo.json bump after 5 attempts.'
+          exit 1

@@ -1,0 +1,24 @@
+<Project>
+
+  <!--
+    Single source of truth for the plugin version.
+
+    Bump <Version> and push to main to publish a release: auto-tag.yml sees a
+    version with no matching v* tag, tags it, and starts release.yml, which
+    publishes latest.zip and then updates repo.json. Leave repo.json alone;
+    it should only change once the new zip exists to download.
+  -->
+
+  <PropertyGroup Label="Identity">
+    <Version>0.1.0.0</Version>
+    <Authors>Kongool</Authors>
+    <RepositoryUrl>https://github.com/Kongool/Fatum</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+  </PropertyGroup>
+
+  <PropertyGroup Label="Determinism" Condition="'$(GITHUB_ACTIONS)' == 'true'">
+    <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
+    <Deterministic>true</Deterministic>
+  </PropertyGroup>
+
+</Project>
