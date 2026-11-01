@@ -20,6 +20,23 @@ This is a **Dalamud plugin**, so it only works when you launch FFXIV through
 
 ---
 
+## Install from the plugin repo
+
+No build needed. Requires XIVLauncher with Dalamud.
+
+1. In FFXIV, open **`/xlsettings`** → **Experimental** tab.
+2. Under **Custom Plugin Repositories**, add this URL, tick **Enabled**, then click the
+   save icon:
+   ```
+   https://raw.githubusercontent.com/Kongool/Fatum/main/repo.json
+   ```
+3. Open **`/xlplugins`**, search for **Fatum Voice Chat**, and install it.
+4. Get a Whisper model (step 2 below), then continue from step 5.
+
+To build it yourself instead, follow steps 1–4.
+
+---
+
 ## 1. Prerequisites
 
 - FFXIV via **XIVLauncher + Dalamud** (open the game once with it so Dalamud loads).
