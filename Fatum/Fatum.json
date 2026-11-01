@@ -1,15 +1,15 @@
 {
   "Name": "Fatum Voice Chat",
   "InternalName": "Fatum",
-  "Author": "you",
-  "Punchline": "Speak into your mic, review, and drop it into FFXIV chat.",
-  "Description": "Push-to-talk or toggle voice recording that is transcribed locally with Whisper and inserted into a review box. You confirm and it is sent to your chosen channel. Fully offline, no cloud, no API keys.",
-  "RepoUrl": "",
+  "Author": "Kongool",
+  "Punchline": "Speak into your mic and it lands in FFXIV chat.",
+  "Description": "Voice-to-text chat, transcribed locally with Whisper: fully offline, no cloud, no API keys. Use push-to-talk, toggle, or hands-free voice activation, with hotkeys routed to different chat channels. Sends automatically, or opens a review box first. Requires a Whisper ggml model file; see the README for the download.",
+  "RepoUrl": "https://github.com/Kongool/Fatum",
   "ApplicableVersion": "any",
   "Tags": [ "voice", "speech", "chat", "accessibility", "whisper" ],
   "CategoryTags": [ "utility", "accessibility" ],
   "LoadRequiredState": 0,
   "LoadSync": false,
   "CanUnloadAsync": true,
-  "IconUrl": ""
+  "IconUrl": "https://raw.githubusercontent.com/Kongool/Fatum/main/Fatum/images/icon.png"
 }
