@@ -10,7 +10,7 @@
   -->
 
   <PropertyGroup Label="Identity">
-    <Version>0.1.0.0</Version>
+    <Version>0.1.1.0</Version>
     <Authors>Kongool</Authors>
     <RepositoryUrl>https://github.com/Kongool/Fatum</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
