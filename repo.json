@@ -3,8 +3,8 @@
     "Author": "Kongool",
     "Name": "Fatum Voice Chat",
     "InternalName": "Fatum",
-    "AssemblyVersion": "0.1.0.0",
-    "TestingAssemblyVersion": "0.1.0.0",
+    "AssemblyVersion": "0.1.1.0",
+    "TestingAssemblyVersion": "0.1.1.0",
     "Description": "Voice-to-text chat, transcribed locally with Whisper: fully offline, no cloud, no API keys. Use push-to-talk, toggle, or hands-free voice activation, with hotkeys routed to different chat channels. Sends automatically, or opens a review box first. Requires a Whisper ggml model file; see the README for the download.",
     "Punchline": "Speak into your mic and it lands in FFXIV chat.",
     "RepoUrl": "https://github.com/Kongool/Fatum",
@@ -27,7 +27,7 @@
     "DownloadLinkTesting": "https://github.com/Kongool/Fatum/releases/latest/download/latest.zip",
     "IsTestingExclusive": false,
     "AcceptsFeedback": true,
-    "DownloadCount": 0,
-    "LastUpdate": "1793562647"
+    "DownloadCount": 5,
+    "LastUpdate": "1794529071"
   }
 ]
